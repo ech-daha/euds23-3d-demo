@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ArcGIS Maps SDK Project</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/4.28/@arcgis/core/assets/esri/themes/light/main.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <div id="viewDiv" style="height: 100%; width: 100%;"></div>
+  <script type="module" src="./initial/footprints.js"></script>
+  <script type="module">
+    import Map from 'https://js.arcgis.com/4.28/@arcgis/core/Map.js'
+    import SceneView from 'https://js.arcgis.com/4.28/@arcgis/core/views/SceneView.js'
+    import MapView from 'https://js.arcgis.com/4.28/@arcgis/core/views/MapView.js'
+    import FeatureLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/FeatureLayer.js'
+    import SceneLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/SceneLayer.js'
+    import ShadowCast from "https://js.arcgis.com/4.28/@arcgis/core/widgets/ShadowCast.js"
+    import DirectLineMeasurement3D from "https://js.arcgis.com/4.28/@arcgis/core/widgets/DirectLineMeasurement3D.js"
+
+    const scLayer = new SceneLayer({ url: 'https://tiles.arcgis.com/tiles/oPre3pOfRfefL8y0/arcgis/rest/services/swissbuildings3D/SceneServer' })
+
+    const map = new Map({
+      basemap: 'satellite',
+      ground: 'world-elevation',
+      layers: [scLayer]
+    })
+
+    const sceneView = new SceneView({
+      map: map,
+      center: [9.074, 47.041],
+      zoom: 14,
+      container: 'viewDiv',
+      highlightOptions: {
+        color: [88, 249, 160]
+      },
+    })
+
+    map.ground.navigationConstraint = 'none'
+
+    // Add Shadow Cast Widget
+    const shadowCastWidget = new ShadowCast({
+      view: sceneView,
+    })
+    shadowCastWidget.viewModel.thresholdOptions.color = [88, 249, 160, 0.5]
+    sceneView.ui.add(shadowCastWidget, 'top-right')
+
+    // Add Measure Widget
+    const measurementWidget = new DirectLineMeasurement3D({ view: sceneView, activeTool: 'distance' })
+    sceneView.ui.add(measurementWidget, 'top-right')
+
+
+    import { graphics, simpleRenderer, extrudeSymbol } from './footprints.js'
+
+    const featureLayer = new FeatureLayer({
+      source: graphics,
+      objectIdField: "OBJECTID",
+      fields: [
+        {
+          name: "OBJECTID",
+          type: "oid"
+        },
+        {
+          name: 'HEIGHT',
+          type: 'double'
+        }
+      ],
+      renderer: simpleRenderer,
+    })
+
+    featureLayer.renderer = {
+      type: 'simple',
+      symbol: extrudeSymbol,
+      visualVariables: [
+        {
+          type: "size",
+          field: "HEIGHT"
+        }
+      ]
+    }
+
+    map.add(featureLayer)
+
+  </script>
+</body>
+
+</html>
