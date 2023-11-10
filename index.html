@@ -11,50 +11,68 @@
 
 <body>
   <div id="viewDiv" style="height: 100%; width: 100%;"></div>
-  <script type="module" src="./initial/footprints.js"></script>
   <script type="module">
+
+    // #########################################
+    // 1. Setup Scene
+    // #########################################
+    // 1.1 Add Map
     import Map from 'https://js.arcgis.com/4.28/@arcgis/core/Map.js'
-    import SceneView from 'https://js.arcgis.com/4.28/@arcgis/core/views/SceneView.js'
-    import MapView from 'https://js.arcgis.com/4.28/@arcgis/core/views/MapView.js'
-    import FeatureLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/FeatureLayer.js'
-    import SceneLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/SceneLayer.js'
-    import ShadowCast from "https://js.arcgis.com/4.28/@arcgis/core/widgets/ShadowCast.js"
-    import DirectLineMeasurement3D from "https://js.arcgis.com/4.28/@arcgis/core/widgets/DirectLineMeasurement3D.js"
-
-    const scLayer = new SceneLayer({ url: 'https://tiles.arcgis.com/tiles/oPre3pOfRfefL8y0/arcgis/rest/services/swissbuildings3D/SceneServer' })
-
     const map = new Map({
-      basemap: 'satellite',
-      ground: 'world-elevation',
-      layers: [scLayer]
+      basemap: 'satellite'
     })
 
+    // 1.2 Add SceneView
+    import SceneView from 'https://js.arcgis.com/4.28/@arcgis/core/views/SceneView.js'
     const sceneView = new SceneView({
       map: map,
       center: [9.074, 47.041],
       zoom: 14,
       container: 'viewDiv',
-      highlightOptions: {
-        color: [88, 249, 160]
-      },
     })
 
+    // #########################################
+    // 2. Add Data
+    // #########################################
+    // 2.1 Add elevation layer
+    map.ground = 'world-elevation'
+
+    // 2.2 Add Buildings SceneLayer
+    import SceneLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/SceneLayer.js'
+    const scLayer = new SceneLayer({ url: 'https://tiles.arcgis.com/tiles/oPre3pOfRfefL8y0/arcgis/rest/services/swissbuildings3D/SceneServer' })
+    map.layers.add(scLayer)
+
+    // 2.3 Allow underground navigation
     map.ground.navigationConstraint = 'none'
 
-    // Add Shadow Cast Widget
+    // #########################################
+    // 3. Add functionality
+    // #########################################
+
+    // 3.1 Add Shadow Cast Widget
+    import ShadowCast from 'https://js.arcgis.com/4.28/@arcgis/core/widgets/ShadowCast.js'
     const shadowCastWidget = new ShadowCast({
       view: sceneView,
     })
-    shadowCastWidget.viewModel.thresholdOptions.color = [88, 249, 160, 0.5]
     sceneView.ui.add(shadowCastWidget, 'top-right')
 
-    // Add Measure Widget
+    // 3.2 Change color
+    shadowCastWidget.viewModel.thresholdOptions.color = [88, 249, 160, 0.5]
+
+    // 3.3 Add Measure Widget
+    import DirectLineMeasurement3D from 'https://js.arcgis.com/4.28/@arcgis/core/widgets/DirectLineMeasurement3D.js'
     const measurementWidget = new DirectLineMeasurement3D({ view: sceneView, activeTool: 'distance' })
     sceneView.ui.add(measurementWidget, 'top-right')
 
+    // #########################################
+    // 4. Add 2D Data
+    // #########################################
 
+    // 4.1 Import predefined graphics, renderer and symbol
     import { graphics, simpleRenderer, extrudeSymbol } from './footprints.js'
 
+    // 4.2 Add FeatureLayer
+    import FeatureLayer from 'https://js.arcgis.com/4.28/@arcgis/core/layers/FeatureLayer.js'
     const featureLayer = new FeatureLayer({
       source: graphics,
       objectIdField: "OBJECTID",
@@ -70,7 +88,9 @@
       ],
       renderer: simpleRenderer,
     })
+    map.add(featureLayer)
 
+    // 4.3 Use an extrudeSymbol instead
     featureLayer.renderer = {
       type: 'simple',
       symbol: extrudeSymbol,
@@ -82,7 +102,7 @@
       ]
     }
 
-    map.add(featureLayer)
+
 
   </script>
 </body>
